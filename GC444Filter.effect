@@ -1,0 +1,40 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform bool switchLeftToRight;
+uniform float2 pixel_size;
+uniform float2 total_size;
+
+sampler_state textureSampler {
+	Filter   = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertData
+{
+    float4 pos : POSITION;
+    float2 uv : TEXCOORD0;
+};
+
+VertData VSDefault(VertData v_in)
+{
+    VertData vert_out;
+    vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+    vert_out.uv = v_in.uv;
+    return vert_out;
+}
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	return image.Sample(textureSampler, float2(v_in.uv.x - floor(fmod(v_in.uv.x * total_size.x, 2.0)) * pixel_size.x, v_in.uv.y));
+}
+
+technique Draw
+{
+    pass
+    {
+        vertex_shader = VSDefault(v_in);
+        pixel_shader = mainImage(v_in);
+    }
+}
